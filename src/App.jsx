@@ -1,21 +1,44 @@
 import './App.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import Row from './components/Row'
+const API_URL = 'http://localhost:3001'
 
 function App() {
   const [task, setTask] = useState('')
-  const [tasks, setTasks] = useState(['Test', 'Another test'])
-  
+  const [tasks, setTasks] = useState([])
 
-  const addTask = (event) => {
-    event.preventDefault()
-    const description = task.trim()
-    if (!description) return
-    setTasks(currentTasks => [...currentTasks, description])
-    setTask('')
-  }
+  useEffect(() => {
+    axios.get(`${API_URL}/tasks`)
+      .then(response => {
+        setTasks(response.data)
+      })
+      .catch(error => {
+        alert(error.response.data ? error.response.data.message : error.message)
+      })
+  }, [])
 
   const deleteTask = (deleted) => {
-    setTasks(currentTasks => currentTasks.filter(t => t !== deleted))
+    axios.delete(`${API_URL}/tasks/${deleted}`)
+      .then(response => {
+        setTasks(currentTasks => currentTasks.filter(task => task.id !== deleted))
+      })
+      .catch(error => {
+        alert(error.response.data ? error.response.data.message : error.message)
+      })
+  }
+
+  const addTask = (e) => {
+    e.preventDefault()
+    const newTask = { description: task }
+    axios.post(`${API_URL}/tasks`, { task: newTask })
+      .then(response => {
+        setTasks(currentTasks => [...currentTasks, response.data])
+        setTask('')
+      })
+      .catch(error => {
+        alert(error.response.data ? error.response.data.message : error.message)
+      })
   }
 
   return (
@@ -29,17 +52,8 @@ function App() {
         />
       </form>
       <ul>
-        <h3>Test</h3>
         {tasks.map(item => (
-          <li key={item}>
-            {item}
-            <button
-              className="delete-button"
-              onClick={() => deleteTask(item)}
-            >
-              Delete
-            </button>
-          </li>
+          <Row key={item.id} task={item} onDelete={deleteTask} />
         ))}
       </ul>
     </div>

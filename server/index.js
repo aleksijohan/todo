@@ -46,7 +46,7 @@ app.post('/tasks', (req, res) => {
         [task.description],
         (err, result) => {
             if (err) {
-                return res.status(500).json({ error: 'Internal Server Error' })
+                return res.status(400).json({ error: 'Internal Server Error' })
             }
             res.status(201).json({ id: result.rows[0].id, description: task.description })
         })

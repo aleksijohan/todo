@@ -1,70 +1,25 @@
 import express from 'express'
 import cors from 'cors'
-import pg from 'pg'
-const port = 3001
-//const app = express()
-const { Pool } = pg
-//app.use(cors())
-const openDb = () => {
-    const pool = new Pool({
-        user: 'postgres',
-        host: 'localhost',
-        database: 'todo',
-        password: 'admin',
-        port: 5432,
-    })
-    return pool
-}
+import 'dotenv/config'
+import todoRouter from './routes/todoRouter.js'
+import userRouter from './routes/userRouter.js'
+
+const port = process.env.PORT || 3001
+
 const app = express()
+
 app.use(cors())
 app.use(express.json())
-app.use(express.urlencoded({extended: false}))
+app.use(express.urlencoded({ extended: false }))
 
-
-app.get('/tasks', (req, res) => {
-    const pool = openDb()
-    pool.query('SELECT * FROM task', (err, result) => {
-        if (err) {
-            console.error(err)
-            res.status(500).json({ error: 'Internal Server Error' })
-        } else {
-            res.status(200).json(result.rows)
-        }
-    })
+app.use('/tasks', todoRouter)
+app.use('/users', userRouter)
+app.use((err, req, res, next) => {
+    const statusCode = err.status || 500
+    console.error(err)
+    res.status(statusCode).json({ error: { message: err.message, status: statusCode } })
 })
+app.get('/ping', (req, res) => res.json({ ok: true }))
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`)
-})
-
-app.post('/tasks', (req, res) => {
-    const pool = openDb()
-    const { task } = req.body
-    if (!task) {
-        return res.status(400).json({ error: 'Task description is required' })
-    }
-    pool.query ('INSERT INTO task (description) VALUES ($1) returning *',
-        [task.description],
-        (err, result) => {
-            if (err) {
-                return res.status(400).json({ error: 'Internal Server Error' })
-            }
-            res.status(201).json({ id: result.rows[0].id, description: task.description })
-        })
-})
-
-app.delete('/tasks/:id', (req, res) => {
-    const pool = openDb()
-    const { id } = req.params
-    console.log(`Deleting task with id: ${id}`)
-    pool.query('delete from task WHERE id = $1',
-        [id], (err, result) => {
-        if (err) {
-        console.error(err.message)
-        return res.status(500).json({ error: 'Internal server error' })
-        }
-        if (result.rowCount === 0) {
-        return res.status(404).json({error: 'Task not found'})
-        }
-        return res.status(200).json({id:id})
-    })
 })

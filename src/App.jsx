@@ -55,7 +55,8 @@ function App() {
           value={task}
           onChange={event => setTask(event.target.value)}
         />
-      </form>
+        <button type="submit">Add task</button>
+    </form>
       <ul>
         {tasks.map(item => (
           <Row key={item.id} task={item} onDelete={deleteTask} />

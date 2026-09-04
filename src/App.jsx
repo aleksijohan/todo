@@ -1,43 +1,48 @@
 import './App.css'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useUser } from './context/useUser'
 import Row from './components/Row'
-const API_URL = 'http://localhost:3001'
+
+const apiUrl = import.meta.env.VITE_API_URL
 
 function App() {
   const [task, setTask] = useState('')
   const [tasks, setTasks] = useState([])
+  const { user } = useUser()
 
   useEffect(() => {
-    axios.get(`${API_URL}/tasks`)
+    axios.get(`${apiUrl}/tasks`)
       .then(response => {
         setTasks(response.data)
       })
       .catch(error => {
-        alert(error.response.data ? error.response.data.message : error.message)
+        alert(error.response ? error.response.data.error.message : error.message)
       })
   }, [])
 
   const deleteTask = (deleted) => {
-    axios.delete(`${API_URL}/tasks/${deleted}`)
+    const headers = { headers: { Authorization: `Bearer ${user.token}` } }
+    axios.delete(`${apiUrl}/tasks/${deleted}`, headers)
       .then(response => {
         setTasks(currentTasks => currentTasks.filter(task => task.id !== deleted))
       })
       .catch(error => {
-        alert(error.response.data ? error.response.data.message : error.message)
+        alert(error.response ? error.response.data.error.message : error.message)
       })
   }
 
   const addTask = (e) => {
     e.preventDefault()
+    const headers = { headers: { Authorization: `Bearer ${user.token}` } }
     const newTask = { description: task }
-    axios.post(`${API_URL}/tasks`, { task: newTask })
+    axios.post(`${apiUrl}/tasks`, { task: newTask }, headers)
       .then(response => {
         setTasks(currentTasks => [...currentTasks, response.data])
         setTask('')
       })
       .catch(error => {
-        alert(error.response.data ? error.response.data.message : error.message)
+        alert(error.response ? error.response.data.error.message : error.message)
       })
   }
 
